@@ -15,9 +15,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // 👈 【新加入】接收前端傳來的隱私權設定，並強制轉成整數 (0 或 1)
     $is_public = isset($_POST['is_public']) ? intval($_POST['is_public']) : 1;
 
+    // 👈 【新加入】接收前端傳來的分類，並做 SQL 安全防禦
+    $category = mysqli_real_escape_string($conn, $_POST['category']);
+
     // --- 步驟 1: 存入表單主體 (forms) ---
-    // 👈 【修改點】在欄位和 VALUES 裡面塞入 is_public
-    $sql_form = "INSERT INTO forms (title, description, author_id, is_public) VALUES ('$title', '$desc', '$author_id', $is_public)";
+    // 👈 【修改點】在欄位和 VALUES 裡面塞入 category
+    $sql_form = "INSERT INTO forms (title, description, author_id, is_public, category) 
+                 VALUES ('$title', '$desc', '$author_id', $is_public, '$category')";
+
 
     if (mysqli_query($conn, $sql_form)) {
         // 核心關鍵：抓取剛剛生成的 form_id

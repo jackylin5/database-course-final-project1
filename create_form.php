@@ -32,6 +32,17 @@
                             <option value="0">僅限會員 (沒登入的使用者會看不到)</option>
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold"><i class="bi bi-tags"></i> 活動分類</label>
+                        <select name="category" class="form-select" required>
+                            <option value="未分類" selected>選擇活動分類...</option>
+                            <option value="運動">🏀 運動/健身</option>
+                            <option value="聚餐">🍽️ 美食/聚餐</option>
+                            <option value="電競">🎮 遊戲/電競</option>
+                            <option value="課業">📚 課業/討論</option>
+                            <option value="其他">✨ 其他</option>
+                        </select>
+                    </div>
                     <div class="text-center mt-4">
 
                         <div class="text-center mt-4">
