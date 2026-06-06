@@ -1,6 +1,6 @@
 <?php
 // 資料庫設定值
-$host = "localhost:3307";
+$host = "localhost";
 $user = "root";
 $password = "root123456"; // 照助教要求的密碼
 $dbname = "group_27";
