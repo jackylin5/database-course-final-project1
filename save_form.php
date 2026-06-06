@@ -11,10 +11,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $author_id = $_SESSION['user_id'];
     $title = mysqli_real_escape_string($conn, $_POST['title']);
     $desc = mysqli_real_escape_string($conn, $_POST['description']);
-    
+
+    // 👈 【新加入】接收前端傳來的隱私權設定，並強制轉成整數 (0 或 1)
+    $is_public = isset($_POST['is_public']) ? intval($_POST['is_public']) : 1;
+
     // --- 步驟 1: 存入表單主體 (forms) ---
-    $sql_form = "INSERT INTO forms (title, description, author_id) VALUES ('$title', '$desc', '$author_id')";
-    
+    // 👈 【修改點】在欄位和 VALUES 裡面塞入 is_public
+    $sql_form = "INSERT INTO forms (title, description, author_id, is_public) VALUES ('$title', '$desc', '$author_id', $is_public)";
+
     if (mysqli_query($conn, $sql_form)) {
         // 核心關鍵：抓取剛剛生成的 form_id
         $form_id = mysqli_insert_id($conn);
@@ -28,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 $sql_q = "INSERT INTO form_questions (form_id, question_text, question_type) 
                           VALUES ('$form_id', '$q_text', '$q_type')";
-                
+
                 if (mysqli_query($conn, $sql_q)) {
                     // 抓取剛剛生成的 question_id
                     $question_id = mysqli_insert_id($conn);
@@ -46,10 +50,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
         }
-        
+
         echo "<script>alert('表單發布成功！'); window.location.href='index.php';</script>";
     } else {
         echo "資料庫儲存失敗: " . mysqli_error($conn);
     }
 }
-?>

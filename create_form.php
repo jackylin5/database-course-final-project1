@@ -18,26 +18,37 @@
                 <form action="save_form.php" method="POST">
                     <div class="mb-4 pb-3 border-bottom">
                         <label class="form-label fw-bold">表單標題</label>
-                        <input type="text" name="title" class="form-control form-control-lg" placeholder="例如：週五羽球內戰報名表" required>
+                        <input type="text" name="title" class="form-control form-control-lg" placeholder="例如：資料庫期末報告讀書會" required>
                         <label class="form-label mt-3">活動描述</label>
                         <textarea name="description" class="form-control" rows="2"></textarea>
                     </div>
 
                     <div id="questions-container">
                     </div>
-
+                    <div class="mb-3">
+                        <label class="form-label fw-bold"><i class="bi bi-eye"></i> 隱私權設定</label>
+                        <select name="is_public" class="form-select">
+                            <option value="1" selected>公開 (所有人皆可查看、報名)</option>
+                            <option value="0">僅限會員 (沒登入的使用者會看不到)</option>
+                        </select>
+                    </div>
                     <div class="text-center mt-4">
+
                         <div class="text-center mt-4">
                             <button type="button" id="add-question" class="btn btn-outline-primary">
                                 <i class="bi bi-plus-circle"></i> ＋ 新增題目
                             </button>
                             <hr>
+
                             <a href="index.php" class="btn btn-outline-secondary btn-lg px-4 me-2">取消並回首頁</a>
                             <button type="submit" class="btn btn-success btn-lg px-5">發布表單</button>
                         </div>
                     </div>
+
                 </form>
             </div>
+
+
         </div>
     </div>
 

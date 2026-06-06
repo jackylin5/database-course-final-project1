@@ -2,10 +2,21 @@
 session_start();
 require_once "includes/db_config.php";
 
-// 抓取最新的 6 份表單 (放在這裡，下方 HTML 就能直接用 $res_recent)
-$sql_recent = "SELECT * FROM forms ORDER BY created_at DESC LIMIT 6";
+// 👈 【新加入】核心權限判定：檢查目前瀏覽網頁的人有沒有登入
+$is_logged_in = isset($_SESSION['user_id']);
+
+if ($is_logged_in) {
+    // 情況 A：如果是已登入的會員，看得到所有表單 (公開 1 + 私密 0)
+    $sql_recent = "SELECT * FROM forms ORDER BY created_at DESC LIMIT 6";
+} else {
+    // 情況 B：如果是未登入的訪客，利用 WHERE 限制，只抓出 is_public = 1 的公開表單！
+    $sql_recent = "SELECT * FROM forms WHERE is_public = 1 ORDER BY created_at DESC LIMIT 6";
+}
+
+// 執行上面選好的 SQL 指令 (原本的這行保持不變)
 $res_recent = mysqli_query($conn, $sql_recent);
-// 抓取最新 3 則公告
+
+// 抓取最新 3 則公告 (原本的這行也保持不變)
 $sql_ann = "SELECT * FROM announcements ORDER BY created_at DESC LIMIT 3";
 $res_ann = mysqli_query($conn, $sql_ann);
 ?>
