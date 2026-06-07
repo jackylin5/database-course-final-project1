@@ -2,8 +2,37 @@
 require_once "includes/admin_auth.php"; // 先檢查門禁
 require_once "includes/db_config.php"; // 連接資料庫
 
+// ==========================================
+// 1. 先處理「表單送出」的動作 (優先處理)
+// ==========================================
+if (isset($_POST['add_user'])) {
+    $username = mysqli_real_escape_string($conn, $_POST['username']);
+    $password = $_POST['password'];
+    $nickname = mysqli_real_escape_string($conn, $_POST['nickname']);
+    $group_id = (int)$_POST['group_id'];
+    $role = mysqli_real_escape_string($conn, $_POST['role']);
 
-// 最簡單、最保險的寫法：直接抓 users 表的所有欄位
+    // 密碼加密
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+    $sql_insert = "INSERT INTO users (username, password, nickname, group_id, role) 
+                   VALUES ('$username', '$hashed_password', '$nickname', $group_id, '$role')";
+
+    if (mysqli_query($conn, $sql_insert)) {
+        echo "<script>
+                alert('會員新增成功！');
+                window.location.href = '" . $_SERVER['PHP_SELF'] . "';
+              </script>";
+        exit;
+    } else {
+        echo "<script>alert('錯誤: " . mysqli_error($conn) . "');</script>";
+    }
+}
+
+// ==========================================
+// 2. 處理完動作後，再撈取畫面要顯示的資料
+// ==========================================
+// 會員列表
 $sql = "SELECT * FROM users";
 $result = mysqli_query($conn, $sql);
 
@@ -13,7 +42,7 @@ $res_user_count = mysqli_query($conn, $sql_user_count);
 $user_data = mysqli_fetch_assoc($res_user_count);
 $total_users_count = $user_data['total'];
 
-// 2. 統計總表單數 (這就是你報錯缺少的變數)
+// 2. 統計總表單數
 $sql_form_count = "SELECT COUNT(*) as total FROM forms";
 $res_form_count = mysqli_query($conn, $sql_form_count);
 $form_data = mysqli_fetch_assoc($res_form_count);
@@ -24,7 +53,8 @@ $sql_res_count = "SELECT COUNT(*) as total FROM form_responses";
 $res_res_count = mysqli_query($conn, $sql_res_count);
 $res_data = mysqli_fetch_assoc($res_res_count);
 $total_responses_count = $res_data['total'];
-// 抓取所有公告內容，方便管理員管理
+
+// 抓取所有公告內容
 $sql_all_ann = "SELECT * FROM announcements ORDER BY created_at DESC";
 $res_all_ann = mysqli_query($conn, $sql_all_ann);
 ?>
@@ -52,23 +82,22 @@ $res_all_ann = mysqli_query($conn, $sql_all_ann);
         <div class="row">
             <div class="col-md-3">
                 <div class="list-group shadow-sm">
-                    <a href="#" class="list-group-item list-group-item-action active">會員帳號管理</a>
-                    <a href="#" class="list-group-item list-group-item-action">所有表單管理</a>
-                    <a href="#" class="list-group-item list-group-item-action text-danger">系統設置</a>
+                    <a href="admin_panel.php" class="list-group-item list-group-item-action active">會員帳號管理</a>
+                    <a href="manage_forms.php" class="list-group-item list-group-item-action">所有表單管理</a>
                 </div>
             </div>
 
             <div class="col-md-9">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm mb-4">
                     <div class="card-header bg-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">會員列表</h5>
-                        <button class="btn btn-primary btn-sm">新增會員</button>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">新增會員</button>
                     </div>
-                    <div class="card-body">
-                        <table class="table table-hover">
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>ID</th>
+                                    <th class="ps-3">ID</th>
                                     <th>帳號</th>
                                     <th>暱稱</th>
                                     <th>群組</th>
@@ -79,10 +108,10 @@ $res_all_ann = mysqli_query($conn, $sql_all_ann);
                             <tbody>
                                 <?php while ($row = mysqli_fetch_assoc($result)): ?>
                                     <tr>
-                                        <td><?php echo $row['id']; ?></td>
-                                        <td><?php echo $row['username']; ?></td>
-                                        <td><?php echo $row['nickname']; ?></td>
-                                        <td><span class="badge bg-secondary"><?php echo $row['group_name']; ?></span></td>
+                                        <td class="ps-3"><?php echo $row['id']; ?></td>
+                                        <td><?php echo htmlspecialchars($row['username']); ?></td>
+                                        <td><?php echo htmlspecialchars($row['nickname']); ?></td>
+                                        <td><span class="badge bg-secondary"><?php echo htmlspecialchars($row['group_name'] ?? $row['group_id'] ?? '未分類'); ?></span></td>
                                         <td>
                                             <?php if ($row['role'] == 'admin'): ?>
                                                 <span class="badge bg-danger">管理員</span>
@@ -92,7 +121,7 @@ $res_all_ann = mysqli_query($conn, $sql_all_ann);
                                         </td>
                                         <td>
                                             <a href="edit_user.php?id=<?php echo $row['id']; ?>" class="btn btn-outline-success btn-sm">修改</a>
-                                            <button class="btn btn-sm btn-outline-danger">刪除</button>
+
                                         </td>
                                     </tr>
                                 <?php endwhile; ?>
@@ -102,7 +131,7 @@ $res_all_ann = mysqli_query($conn, $sql_all_ann);
                 </div>
 
                 <div class="row">
-                    <div class="col-lg-6">
+                    <div class="col-lg-6 mb-4">
                         <div class="card shadow-sm border-0">
                             <div class="card-header bg-dark text-white d-flex align-items-center">
                                 <i class="bi bi-megaphone me-2"></i> 發布新系統公告
@@ -118,40 +147,41 @@ $res_all_ann = mysqli_query($conn, $sql_all_ann);
                                     <button type="submit" class="btn btn-warning w-100 btn-sm fw-bold">發布公告</button>
                                 </form>
                             </div>
-                            <div class="card shadow-sm mt-4">
-                                <div class="card-header bg-secondary text-white">📋 已發布公告管理</div>
-                                <div class="card-body p-0">
-                                    <table class="table table-sm table-hover mb-0">
-                                        <thead class="table-light">
+                        </div>
+
+                        <div class="card shadow-sm mt-4">
+                            <div class="card-header bg-secondary text-white">📋 已發布公告管理</div>
+                            <div class="card-body p-0">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-3">標題</th>
+                                            <th>發布日期</th>
+                                            <th class="text-center">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php while ($ann_row = mysqli_fetch_assoc($res_all_ann)): ?>
                                             <tr>
-                                                <th class="ps-3">標題</th>
-                                                <th>發布日期</th>
-                                                <th class="text-center">操作</th>
+                                                <td class="ps-3 align-middle"><?php echo htmlspecialchars($ann_row['title']); ?></td>
+                                                <td class="align-middle small"><?php echo date('m/d H:i', strtotime($ann_row['created_at'])); ?></td>
+                                                <td class="text-center">
+                                                    <a href="delete_announcement.php?id=<?php echo $ann_row['id']; ?>"
+                                                        class="btn btn-link text-danger p-0"
+                                                        onclick="return confirm('確定要移除這條公告嗎？')">
+                                                        <i class="bi bi-x-circle"></i> 刪除
+                                                    </a>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php while ($ann_row = mysqli_fetch_assoc($res_all_ann)): ?>
-                                                <tr>
-                                                    <td class="ps-3 align-middle"><?php echo htmlspecialchars($ann_row['title']); ?></td>
-                                                    <td class="align-middle small"><?php echo date('m/d H:i', strtotime($ann_row['created_at'])); ?></td>
-                                                    <td class="text-center">
-                                                        <a href="delete_announcement.php?id=<?php echo $ann_row['id']; ?>"
-                                                            class="btn btn-link text-danger p-0"
-                                                            onclick="return confirm('確定要移除這條公告嗎？')">
-                                                            <i class="bi bi-x-circle"></i> 刪除
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                            <?php endwhile; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-lg-6">
-                        <div class="card shadow-sm border-0 bg-primary text-white h-5">
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow-sm border-0 bg-primary text-white">
                             <div class="card-body">
                                 <h6 class="card-title"><i class="bi bi-graph-up"></i> 系統即時概況</h6>
                                 <hr class="bg-white">
@@ -172,16 +202,52 @@ $res_all_ann = mysqli_query($conn, $sql_all_ann);
                     </div>
                 </div>
             </div>
-
-
-            <div class="col-md-9">
-
-            </div>
-
-
         </div>
     </div>
 
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addUserModalLabel">新增會員資料</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">帳號</label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">密碼</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">暱稱</label>
+                            <input type="text" name="nickname" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">群組編號 (Group ID)</label>
+                            <input type="number" name="group_id" class="form-control" placeholder="例如: 1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">角色權限</label>
+                            <select name="role" class="form-select">
+                                <option value="user" selected>一般會員</option>
+                                <option value="admin">管理員</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="submit" name="add_user" class="btn btn-primary">儲存帳號</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
